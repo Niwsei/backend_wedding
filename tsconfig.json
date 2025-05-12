@@ -1,0 +1,17 @@
+// tsconfig.json
+{
+    "compilerOptions": {
+      "target": "ES2016", // หรือใหม่กว่า
+      "module": "CommonJS",
+      "outDir": "./dist",
+      "rootDir": "./src",
+      "strict": true,
+      "moduleResolution": "node",
+      "esModuleInterop": true,
+      "skipLibCheck": true,
+      "forceConsistentCasingInFileNames": true,
+      "resolveJsonModule": true // ถ้ามีการ import JSON
+    },
+    "include": ["src/**/*"], // ระบุว่าไฟล์ไหนที่จะ compile
+    "exclude": ["node_modules"] // ไม่ต้อง compile node_modules
+  }
