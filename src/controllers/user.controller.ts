@@ -28,7 +28,7 @@ export const getMyProfileHandler = async (
     }
 };
 
-export const updateMyProfileHandler = async (req: Request<{}, {}, UpdateProfileInput> /* ระบุ Type ของ Request Body*/, res: Response, next: NextFunction) => {
+export const updateMyProfileHandler = async (req: Request<{}, {}, UpdateProfileInput> /* ระบุ Type ของ Request Body*/, res: Response, next: NextFunction): Promise<void> => {
 
     const user_id = req.user?.userId;
 
@@ -39,7 +39,7 @@ export const updateMyProfileHandler = async (req: Request<{}, {}, UpdateProfileI
 
     try {
         const updatedProfile = await updateUserProfileById(pool, user_id, req.body)
-        return res.status(200).json({
+         res.status(200).json({
             status: 'success', 
             data: { user: updatedProfile } 
         })

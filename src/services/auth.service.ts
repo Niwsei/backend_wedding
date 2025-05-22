@@ -80,9 +80,10 @@ export const registerUserService = async (pool: Pool, input: SignupInput) => {
         const [existingUsers] = await connection.query<User[]>('SELECT user_id FROM Users WHERE email = ? LIMIT 1', [email]);
         // ກວດສອບຈຳນວນ record ທີ່ພົບ.
         if (existingUsers.length > 0) {
-            // ຖ້າມີ record > 0, ໝາຍຄວາມວ່າອີເມວນີ້ຖືກໃຊ້ແລ້ວ. ໂຍນ (throw) `BadRequestError` ອອກໄປ.
-            throw new BadRequestError('Email address is already registered.');
-        }
+    logger.warn({ email }, 'Registration failed: Email already exists');
+    // throw new BadRequestError('Email address is already registered.'); // เปลี่ยนเป็น
+    throw new ApiError(409, 'Email address is already registered.', true); // 409 Conflict
+}
 
         // ເອີ້ນ function `hashPassword` ເພື່ອສ້າງ hash ຈາກ `password` ທີ່ client ສົ່ງມາ.
         const { hash: hashedPassword } = await hashPassword(password);

@@ -11,7 +11,7 @@ export const UpdateProfileSchema = z.object({
     totalBudget: z.number().positive('Budget must be a positive number').optional().nullable(),
     // ไม่รวม email, phone_number, password
   }).refine(data => Object.keys(data).length > 0, { // ตรวจสอบว่ามีข้อมูลส่งมาอัปเดตอย่างน้อย 1 field
-    message: "At least one field must be provided for update.",
+    message: "ຕ້ອງມີຢ່າງໜ້ອຍໜຶ່ງຊ່ອງຂໍ້ມູນເພື່ອອັບເດດ.",
     path: ["body"], // path ของ error
   }),
 });

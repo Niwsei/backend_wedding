@@ -1,4 +1,4 @@
-import { OkPacket, OkPacketParams, Pool, ResultSetHeader, RowDataPacket } from 'mysql2/promise';
+import { OkPacketParams, Pool, ResultSetHeader, RowDataPacket } from 'mysql2/promise';
 import NotFoundError from '../errors/notFoundError';
 import logger from '../utils/logger';
 import ApiError from '../errors/apiError';
