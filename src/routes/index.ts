@@ -1,4 +1,7 @@
 import express from 'express';
+import { generalRateLimiter } from '../middleware/rateLimiter';
+
+
 import authRouter from './auth.routes';
 import logger from '../utils/logger';
 import userRouter from './user.routes'; // Example import for user routes
@@ -16,6 +19,8 @@ import eventRouter from './event.routes';
 // import other routers...
 
 const router = express.Router();
+
+router.use(generalRateLimiter); // Apply rate limiting middleware globally
 
 router.use('/auth', (req, res, next) => {
     logger.debug(`Routing to /auth for path: ${req.path}`);

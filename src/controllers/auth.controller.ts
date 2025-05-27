@@ -10,7 +10,7 @@ import { Request, Response, NextFunction } from 'express';
 // - requestOtpService: function ສຳລັບການຂໍລະຫັດ OTP (One-Time Password).
 // - verifyOtpAndRegisterService: function ສຳລັບການກວດສອບ OTP ແລະ ລົງທະບຽນຜູ້ໃຊ້ (ຖ້າ OTP ຖືກຕ້ອງ).
 import {
-    registerUserService, loginUserService, requestOtpService, verifyOtpAndRegisterService
+    registerUserService, loginUserService
 } from '../services/auth.service';
 
 // ນຳເຂົ້າ type `SignupInput` ແລະ `LoginInput` ຈາກ file `auth.schema.ts`.
@@ -34,21 +34,14 @@ import pool from '../config/db';
 //   - `SignupInput`: ໝາຍເຖິງ type ຂອງ `req.body` (ຂໍ້ມູນທີ່ client ສົ່ງມາ) ຕ້ອງກົງກັບ schema `SignupInput`.
 export const registerHandler = async (req: Request<{}, {}, SignupInput>, res: Response, next: NextFunction) => {
   // ເລີ່ມຕົ້ນ block `try` ເພື່ອດັກຈັບ error ທີ່ອາດຈະເກີດຂຶ້ນໃນ service function.
+  const bodyData = req.body as SignupInput; // ກຳນົດ type ຂອງ `req.body` ເພື່ອໃຫ້ TypeScript ஈາກວ່ານີ້ເປັນ `SignupInput`.
   try {
-    // ເອີ້ນ `registerUserService` ເພື່ອສ້າງຜູ້ໃຊ້ໃໝ່ໃນຖານຂໍ້ມູນ, ໂດຍສົ່ງ `pool` (connection pool)
-    // ແລະ `req.body` (ຂໍ້ມູນຜູ້ໃຊ້ຈາກ client) ເຂົ້າໄປ.
-    // `await` ຈະລໍຖ້າຈົນກວ່າ `registerUserService` ຈະເຮັດວຽກສຳເລັດ ແລະ ສົ່ງຄືນຂໍ້ມູນຜູ້ໃຊ້ໃໝ່.
-    const newUser = await registerUserService(pool, req.body);
-    // Destructuring object `newUser` ເພື່ອແຍກເອົາ `password_hash` ອອກ
-    // ແລະ ເກັບ property ທີ່ເຫຼືອທັງໝົດໄວ້ໃນ object ໃໝ່ຊື່ `userWithoutPassword`.
-    // `as any` ຖືກໃຊ້ຢູ່ບ່ອນນີ້ (ເຖິງອາດຈະບໍ່ແມ່ນວິທີທີ່ດີທີ່ສຸດ) ເພື່ອອະນຸຍາດໃຫ້ destructuring property ທີ່ບໍ່ໄດ້ລະບຸໃນ type ຕົ້ນສະບັບໄດ້ງ່າຍ.
-    // ເຫດຜົນທີ່ເຮັດແບບນີ້: ເພື່ອບໍ່ໃຫ້ສົ່ງ password hash ກັບໄປຫາ client ໃນ response ເພື່ອຄວາມປອດໄພ.
+  
+    const newUser = await registerUserService(bodyData);
+    
     const { password_hash, ...userWithoutPassword } = newUser as any;
-    // ສົ່ງ HTTP response ກັບໄປຫາ client:
-    // - `res.status(201)`: ກຳນົດ status code ເປັນ 201 (Created) ເພາະມີການສ້າງ resource (user) ໃໝ່.
-    // - `.json(...)`: ສົ່ງ response body ເປັນ JSON object ທີ່ມີ `status: 'success'`
-    //   ແລະ `data` ທີ່ບັນຈຸ object `user` (ເຊິ່ງກໍຄື `userWithoutPassword`).
-    res.status(201).json({ status: 'success', data: { user: userWithoutPassword } });
+  
+    res.status(201).json({ status: 'success', data: { user: newUser } });
   // ເລີ່ມຕົ້ນ block `catch` ເຊິ່ງຈະເຮັດວຽກຖ້າມີ error ເກີດຂຶ້ນໃນ block `try`.
   } catch (error) {
     // ເອີ້ນ `next(error)` ເພື່ອສົ່ງ object `error` ທີ່ເກີດຂຶ້ນໄປໃຫ້ error handling middleware ຂອງ Express ຈັດການຕໍ່ໄປ.
@@ -61,62 +54,14 @@ export const registerHandler = async (req: Request<{}, {}, SignupInput>, res: Re
 // ປະກາດ ແລະ export function handler ແບບ asynchronous ຊື່ `loginHandler`.
 // `<Request<{}, {}, LoginInput>>` ກຳນົດວ່າ `req.body` ຕ້ອງກົງກັບ schema `LoginInput`.
 export const loginHandler = async (req: Request<{}, {}, LoginInput>, res: Response, next: NextFunction) => {
-  // ເລີ່ມຕົ້ນ block `try`.
+   const bodyData = req.body as LoginInput;
   try {
-    // ເອີ້ນ `loginUserService` ເພື່ອກວດສອບຂໍ້ມູນການ login, ໂດຍສົ່ງ `pool` ແລະ `req.body` ເຂົ້າໄປ.
-    // `await` ລໍຖ້າຜົນລັບ (ເຊັ່ນ: JWT token ຫຼື ຂໍ້ມູນ user).
-    const result = await loginUserService(pool, req.body);
-    // ສົ່ງ HTTP response ກັບໄປຫາ client:
-    // - `res.status(200)`: ກຳນົດ status code ເປັນ 200 (OK) ເພາະ login ສຳເລັດ.
-    // - `.json(...)`: ສົ່ງ response body ເປັນ JSON object ທີ່ມີ `status: 'success'`
-    //   ແລະ `data` ທີ່ບັນຈຸ `result` (ເຊິ່ງອາດຈະເປັນ token ແລະ ຂໍ້ມູນ user).
+ const result = await loginUserService(bodyData);
     res.status(200).json({ status: 'success', data: result });
-  // ເລີ່ມຕົ້ນ block `catch`.
   } catch (error) {
     // ສົ່ງ error ໄປໃຫ້ error handling middleware.
     next(error);
   }
 };
 
-// --- ການຂໍລະຫັດ OTP (Request OTP) ---
-// ປະກາດ ແລະ export function handler ແບບ asynchronous ຊື່ `requestOtpHandler`.
-// `<Request<{}, {}, RequestOtpInput>>` ກຳນົດວ່າ `req.body` ຕ້ອງກົງກັບ schema `RequestOtpInput` (ເຊັ່ນ: ມີເບີໂທລະສັບ).
-export const requestOtpHandler = async (req: Request<{}, {}, RequestOtpInput>, res: Response, next: NextFunction) => {
-    // ເລີ່ມຕົ້ນ block `try`.
-    try {
-        // ເອີ້ນ `requestOtpService` ເພື່ອຈັດການການສ້າງ ແລະ ສົ່ງ OTP, ໂດຍສົ່ງ `pool` ແລະ `req.body` ເຂົ້າໄປ.
-        // `await` ລໍຖ້າຜົນລັບ (ເຊິ່ງໃນທີ່ນີ້ເປັນ object ທີ່ມີ property `message`).
-        const result = await requestOtpService(pool, req.body);
-        // ສົ່ງ HTTP response ກັບໄປຫາ client:
-        // - `res.status(200)`: ກຳນົດ status code ເປັນ 200 (OK).
-        // - `.json(...)`: ສົ່ງ response body ເປັນ JSON object ທີ່ມີ `status: 'success'`
-        //   ແລະ `message` ຈາກ `result` (ເຊັ່ນ: "OTP sent successfully").
-        res.status(200).json({ status: 'success', message: result.message });
-    // ເລີ່ມຕົ້ນ block `catch`.
-    } catch (error) {
-      // ສົ່ງ error ໄປໃຫ້ error handling middleware.
-      next(error);
-    }
-};
 
-// --- ການຢືນຢັນ OTP ແລະ ລົງທະບຽນ (Verify OTP & Register) ---
-// ປະກາດ ແລະ export function handler ແບບ asynchronous ຊື່ `verifyOtpHandler`.
-// `<Request<{}, {}, VerifyOtpInput>>` ກຳນົດວ່າ `req.body` ຕ້ອງກົງກັບ schema `VerifyOtpInput` (ເຊັ່ນ: ມີເບີໂທລະສັບ ແລະ ລະຫັດ OTP).
-export const verifyOtpHandler = async (req: Request<{}, {}, VerifyOtpInput>, res: Response, next: NextFunction) => {
-    // ເລີ່ມຕົ້ນ block `try`.
-    try {
-        // ເອີ້ນ `verifyOtpAndRegisterService` ເພື່ອກວດສອບ OTP ແລະ ລົງທະບຽນຜູ້ໃຊ້ຖ້າ OTP ຖືກຕ້ອງ,
-        // ໂດຍສົ່ງ `pool` ແລະ `req.body` ເຂົ້າໄປ.
-        // `await` ລໍຖ້າຜົນລັບ (ເຊິ່ງອາດຈະເປັນຂໍ້ມູນ user ໃໝ່ ແລະ token).
-        const result = await verifyOtpAndRegisterService(pool, req.body);
-        // ສົ່ງ HTTP response ກັບໄປຫາ client:
-        // - `res.status(201)`: ກຳນົດ status code ເປັນ 201 (Created) ເພາະຍ້ອນມີການສ້າງ user ໃໝ່.
-        // - `.json(...)`: ສົ່ງ response body ເປັນ JSON object ທີ່ມີ `status: 'success'`
-        //   ແລະ `data` ທີ່ບັນຈຸ `result` (ຂໍ້ມູນຈາກການຢືນຢັນ ແລະ ລົງທະບຽນ).
-        res.status(201).json({ status: 'success', data: result });
-    // ເລີ່ມຕົ້ນ block `catch`.
-    } catch (error) {
-      // ສົ່ງ error ໄປໃຫ້ error handling middleware.
-      next(error);
-    }
-};

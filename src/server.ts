@@ -3,6 +3,7 @@ import config from './config';
 import logger from './utils/logger';
 import { closeDbPool } from './config/db';
 import { closeRedisConnection } from './config/redis';
+import { disconnectPrisma } from './config/prisma';
 
 const port = config.PORT;
 
@@ -18,8 +19,8 @@ signals.forEach((signal) => {
     logger.info(`\nReceived ${signal}, shutting down gracefully...`);
     server.close(async () => {
       logger.info('HTTP server closed.');
-      await closeRedisConnection();
-      await closeDbPool();
+       await disconnectPrisma(); // <-- เรียกปิด Prisma Client
+      await closeRedisConnection(); // <-- เรียกปิด Redis (ถ้ามี)
       logger.info('Resources closed. Exiting process.');
       process.exit(0); // Clean exit
     });

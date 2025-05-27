@@ -159,3 +159,5 @@ if (!pool) {
 // ນີ້ໝາຍຄວາມວ່າ file ອື່ນໆທີ່ `import` file ນີ້ ສາມາດເຂົ້າເຖິງ connection pool ນີ້ໄດ້ໂດຍກົງ
 // ເພື່ອນຳໄປໃຊ້ຂໍ connection ສຳລັບ query ຂໍ້ມູນຕໍ່ໄປ.
 export default pool;
+
+

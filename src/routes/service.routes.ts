@@ -16,19 +16,26 @@ import {
 } from '../controllers/service.controller';
 import { authenticate } from '../middleware/authenticate'; // Import authenticate
 import { authorizeRoles } from '../middleware/authorizeRoles';
-// import { authorizeRoles } from '../middleware/authorizeRoles'; // Middleware สำหรับ Admin (สร้างทีหลัง)
+import { cacheMiddleware } from '../services/cache';
 
 const router = express.Router();
+
+
+
+const SERVICE_LIST_CACHE_TTL = 60 * 5; // Cache list for 5 minutes
+const SERVICE_DETAIL_CACHE_TTL = 60 * 30; // Cache detail for 30 minutes
 
 // --- Public Routes ---
 router.get(
     '/',
+    cacheMiddleware(SERVICE_LIST_CACHE_TTL),
     validateRequest({ query: GetAllServicesQuerySchema.shape.query }), // Validate query params
     getAllServicesHandler
 );
 
 router.get(
     '/:serviceId',
+    cacheMiddleware(SERVICE_DETAIL_CACHE_TTL),
     validateRequest({ params: GetServiceParamsSchema.shape.params }), // Validate route param
     getServiceByIdHandler
 );

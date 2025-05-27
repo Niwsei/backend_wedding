@@ -11,6 +11,32 @@ import {
 } from '../services/service.service';
 import { GetAllServicesQuery, GetServiceParams, CreateServiceInput, UpdateServiceInput , UpdateServiceParams } from '../schemas/service.schema'; // Import GetServiceParams
 import NotFoundError from '../errors/notFoundError';
+import redisClient from '../config/redis';
+import logger from '../utils/logger';
+
+
+
+const clearServiceCache = async (serviceId?: number) => {
+    const listKey = `cache:/api/services`; // Key หลักสำหรับ List (อาจจะต้องซับซ้อนกว่านี้ถ้ามี query params เยอะ)
+    logger.debug({ keys: [listKey, serviceId ? `cache:/api/services/${serviceId}` : 'N/A'] }, 'Attempting to clear service cache');
+    try {
+        if (redisClient.status !== 'ready') {
+            logger.warn('Redis not ready, skipping cache clear.');
+            return;
+        }
+        const keysToDelete: string[] = [listKey]; // ลบ cache ของ list เสมอ
+        if (serviceId) {
+            keysToDelete.push(`cache:/api/services/${serviceId}`); // ลบ cache ของ detail ถ้ามี ID
+        }
+        // สำหรับ cache ที่มี query params อาจจะต้องใช้ SCAN และ DEL ที่ซับซ้อนขึ้น
+        // หรือใช้ Tagging (ถ้า Redis version รองรับ หรือใช้ Library ช่วย)
+        // วิธีง่ายๆ คือลบ Key ที่ตรงๆ ก่อน
+        const deletedCount = await redisClient.del(keysToDelete);
+        logger.info({ deletedCount, keys: keysToDelete }, 'Service cache cleared');
+    } catch (error) {
+        logger.error({ err: error }, 'Error clearing service cache');
+    }
+}
 
 export const getAllServicesHandler = async (
     req: Request<{}, {}, {}, GetAllServicesQuery>, // Query params
@@ -58,6 +84,7 @@ export const createServiceHandler = async (
 ): Promise<void> => {
     try {
         const newService = await createService(pool, req.body);
+        await clearServiceCache();
          res.status(201).json({ status: 'success', data: { service: newService } });
     } catch (error) {
         return next(error);
@@ -81,6 +108,7 @@ export const updateServiceHandler = async (
         const bodyData = req.body as UpdateServiceInput; // Cast type หลังจาก validate
 
         const updatedService = await updateServiceById(pool, serviceId, bodyData);
+        await clearServiceCache(serviceId);
 
        res.status(200).json({ status: 'success', data: { service: updatedService } });
     } catch (error: any) {
@@ -104,6 +132,7 @@ export const deleteServiceHandler = async (
         }
 
         const result = await deleteServiceById(pool, serviceId);
+         await clearServiceCache(serviceId);
          res.status(200).json({ status: 'success', message: result.message });
     } catch (error) {
         return next(error);

@@ -5,9 +5,14 @@ import compression from 'compression';
 import config from './config';
 import apiRouter from './routes';
 import { errorHandler } from './middleware/errorHandler';
-import logger from './utils/logger';
+import logger, { addRequestId, requestLogger } from './utils/logger';
+import { setupSwagger } from './config/swagger';
 
-const app: Application = express();
+const app: express.Express = express();
+
+
+app.use(addRequestId)
+app.use(requestLogger)
 
 // Core Middleware
 app.use(helmet());
@@ -15,6 +20,10 @@ app.use(cors({ origin: config.CORS_ORIGIN, credentials: true }));
 app.use(compression());
 app.use(express.json({ limit: '10kb' }));
 app.use(express.urlencoded({ extended: true, limit: '10kb' }));
+
+if (config.NODE_ENV !== 'production') { // แสดง Docs เฉพาะใน Non-Production
+    setupSwagger(app);
+}
 
 // Request Logging
 app.use((req: Request, res: Response, next: NextFunction) => {
@@ -30,14 +39,15 @@ app.use((req: Request, res: Response, next: NextFunction) => {
 app.use('/api', apiRouter);
 
 // Base Route
-app.get('/', (req: Request, res: Response) => {
-    res.status(200).send('Blissful Weddings Backend API v1.0')
+app.get('/', (req, res) => { // ไม่ต้องใส่ Type Request, Response ที่นี่แล้ว
+  res.send('Blissful Weddings Backend is Running!');
 });
 
 // 404 Handler
-app.use('*', (req: Request, res: Response) => {
-    logger.warn(`404 Not Found: ${req.method} ${req.originalUrl}`);
-    res.status(404).json({ status: 'fail', message: `The requested URL ${req.originalUrl} was not found on this server.` });
+app.use('*', (req, res) => { // ไม่ต้องใส่ Type Request, Response
+    const requestId = (req as any).id || req.headers['x-request-id']; // ดึง requestId มา log
+    logger.warn({ requestId, method: req.method, url: req.originalUrl }, `404 Not Found`);
+    res.status(404).json({ status: 'fail', message: `Route ${req.originalUrl} not found` });
 });
 
 // Global Error Handler

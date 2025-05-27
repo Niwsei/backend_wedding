@@ -8,12 +8,12 @@ interface HashedPasswordResult {
 }
 
 
- const hashPassword = async (password: string, customSalt: string | null = null): Promise<HashedPasswordResult> => {
-  /* return await bcrypt.hash(password, saltRounds); */
+
+ 
+const hashPassword = async (password: string): Promise<string> => { // <--- เปลี่ยน Return Type
   try {
-    const salt = customSalt || await bcrypt.genSalt(saltRounds)
-    const hash = await bcrypt.hash(password, salt);
-    return { hash, salt };
+    const hash = await bcrypt.hash(password, saltRounds);
+    return hash; // <--- คืนค่า hash string
   } catch (error: any) {
     console.error('Error hashing password:', error);
     throw error;
@@ -32,3 +32,16 @@ interface HashedPasswordResult {
 
 
 export { hashPassword, comparePassword };
+
+
+
+ /*  const hashPassword = async (password: string, customSalt: string | null = null): Promise<HashedPasswordResult> => {
+  try {
+    const salt = customSalt || await bcrypt.genSalt(saltRounds)
+    const hash = await bcrypt.hash(password, salt);
+    return { hash, salt };
+  } catch (error: any) {
+    console.error('Error hashing password:', error);
+    throw error;
+  }
+}; */

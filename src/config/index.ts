@@ -28,99 +28,76 @@ dotenv.config({ path: path.resolve(__dirname, '../../.env') });
 // ປະກາດ object schema ຊື່ `envSchema` ໂດຍໃຊ້ `zod`.
 // Schema ນີ້ຈະກຳນົດໂຄງສ້າງ, ປະເພດຂໍ້ມູນ, ແລະ ເງື່ອນໄຂຄວາມຖືກຕ້ອງ
 // ສຳລັບໂຕແປສະພາບແວດລ້ອມ (environment variables) ທີ່ແອັບພລິເຄຊັນຕ້ອງການ.
+
+/* export interface Config {
+    NODE_ENV: 'development' | 'production' | 'test';
+    PORT: number;
+    DB_HOST: string;
+    DB_USER: string;
+    DB_PASSWORD: string;
+    DB_NAME: string;
+    DB_PORT: number;
+    JWT_SECRET: string;
+    LOG_LEVEL: 'trace' | 'debug' | 'info' | 'warn' | 'error' | 'fatal';
+    // ... other properties ...
+    REDIS_PASSWORD?: string;
+
+    // Add test config properties
+    TEST_ADMIN_EMAIL?: string;
+    TEST_ADMIN_PASSWORD?: string;
+    TEST_USER_EMAIL?: string;
+    TEST_USER_PASSWORD?: string;
+} */
+
 const envSchema = z.object({
-   // ກຳນົດໂຕແປ `NODE_ENV`:
-   //   - `z.enum(['development', 'production', 'test'])`: ຕ້ອງເປັນໜຶ່ງໃນສາມຄ່າ string ນີ້ເທົ່ານັ້ນ.
-   //   - `.default('development')`: ຖ້າບໍ່ມີການກຳນົດ `NODE_ENV` ໃນ `.env`, ຈະໃຊ້ຄ່າ 'development' ເປັນຄ່າເລີ່ມຕົ້ນ.
-   NODE_ENV: z.enum(['development', 'production', 'test']).default('development'),
+  NODE_ENV: z.enum(['development', 'production', 'test']).default('development'),
+  PORT: z.coerce.number().default(3000),
+  DB_HOST: z.string().min(1, "DB_HOST is required"), // เพิ่ม message ให้ชัดเจน
+  DB_USER: z.string().min(1, "DB_USER is required"),
+  DB_PASSWORD: z.string(), // Zod จะถือว่าเป็น required ถ้าไม่ใส่ .optional()
+  DB_NAME: z.string().min(1, "DB_NAME is required"),
+  DB_PORT: z.coerce.number().default(3306),
+  DATABASE_URL: z.string().url("DATABASE_URL must be a valid connection string"),
+  JWT_SECRET: z.string().min(10, 'JWT_SECRET must be at least 10 characters long'),
+  CORS_ORIGIN: z.string().optional(),
+  LOG_LEVEL: z.enum(['trace', 'debug', 'info', 'warn', 'error', 'fatal']).default('info'),
 
-   // ກຳນົດໂຕແປ `PORT`:
-   //   - `z.coerce.number()`: ພະຍາຍາມແປງຄ່າທີ່ໄດ້ຮັບ (ເຊິ່ງມັກຈະເປັນ string ຈາກ process.env) ໃຫ້ເປັນ number.
-   //   - `.positive()`: ຄ່າ number ນັ້ນຕ້ອງເປັນບວກ (ຫຼາຍກວ່າ 0).
-   //   - `.default(3000)`: ຖ້າບໍ່ມີການກຳນົດ, ໃຊ້ຄ່າເລີ່ມຕົ້ນເປັນ 3000.
-   PORT: z.coerce.number().positive().default(3000),
+  // --- TWILIO --- (เอา Comment ออกถ้ายังใช้ หรือลบออกถ้าไม่ใช้แล้ว)
+  /* TWILIO_ACCOUNT_SID: z.string().startsWith('AC', 'Invalid Twilio Account SID'),
+  TWILIO_AUTH_TOKEN: z.string().min(1, 'Twilio Auth Token is required'),
+  TWILIO_PHONE_NUMBER: z.string().min(1, 'Twilio Phone Number is required'), */
 
-   // ກຳນົດໂຕແປ `DB_HOST` (ທີ່ຢູ່ຂອງ database server):
-   //   - `z.string()`: ຕ້ອງເປັນ string.
-   //   - `.min(1)`: ຕ້ອງມີຄວາມຍາວຢ່າງໜ້ອຍ 1 ໂຕອັກສອນ (ບໍ່ສາມາດເປັນ string ຫວ່າງເປົ່າ).
-   DB_HOST: z.string().min(1),
+  REDIS_HOST: z.string().default('localhost'),
+  REDIS_PORT: z.coerce.number().default(6379),
+  REDIS_PASSWORD: z.string().optional(),
 
-   // ກຳນົດໂຕແປ `DB_USER` (ຊື່ຜູ້ໃຊ້ database):
-   //   - `z.string().min(1)`: ຄືກັນກັບ `DB_HOST`.
-   DB_USER: z.string().min(1),
+  TEST_ADMIN_EMAIL: z.string().email().optional(),
+  TEST_ADMIN_PASSWORD: z.string().min(6).optional(),
+  TEST_USER_EMAIL: z.string().email().optional(),
+  TEST_USER_PASSWORD: z.string().min(6).optional(),
+  // ***** ไม่มี TEST_ADMIN_EMAIL, TEST_ADMIN_PASSWORD, TEST_USER_EMAIL, TEST_USER_PASSWORD ที่นี่ *****
+});
 
-   // ກຳນົດໂຕແປ `DB_PASSWORD` (ລະຫັດຜ່ານ database):
-   //   - `z.string()`: ຕ້ອງເປັນ string (ອະນຸຍາດໃຫ້ເປັນ string ຫວ່າງເປົ່າໄດ້).
-   DB_PASSWORD: z.string(),
-
-   // ກຳນົດໂຕແປ `DB_NAME` (ຊື່ database):
-   //   - `z.string().min(1)`: ຄືກັນກັບ `DB_HOST`.
-   DB_NAME: z.string().min(1),
-
-   // ກຳນົດໂຕແປ `DB_PORT` (port ຂອງ database server):
-   //   - `z.coerce.number().positive().default(3306)`: ຄືກັນກັບ `PORT`, ແຕ່ default ເປັນ 3306 (port ມາດຕະຖານຂອງ MySQL).
-   DB_PORT: z.coerce.number().positive().default(3306),
-
-   // ກຳນົດໂຕແປ `JWT_SECRET` (ລະຫັດລັບສຳລັບ JSON Web Token):
-   //   - `z.string().min(10, 'JWT_SECRET must be at least 10 characters long')`:
-   //     ຕ້ອງເປັນ string ທີ່ມີຄວາມຍາວຢ່າງໜ້ອຍ 10 ໂຕອັກສອນ. ຖ້າບໍ່ຜ່ານ, ຈະສະແດງຂໍ້ຄວາມ error ທີ່ລະບຸໄວ້.
-   JWT_SECRET: z.string().min(10, 'JWT_SECRET must be at least 10 characters long'),
-
-   // ກຳນົດໂຕແປ `TWILIO_ACCOUNT_SID` (Account SID ຂອງ Twilio):
-   //   - `z.string().startsWith('AC', 'Invalid Twilio Account SID')`:
-   //     ຕ້ອງເປັນ string ທີ່ຂຶ້ນຕົ້ນດ້ວຍ 'AC'. ຖ້າບໍ່ຜ່ານ, ຈະສະແດງຂໍ້ຄວາມ error ທີ່ລະບຸໄວ້.
-   TWILIO_ACCOUNT_SID: z.string().startsWith('AC', 'Invalid Twilio Account SID'),
-
-   // ກຳນົດໂຕແປ `TWILIO_AUTH_TOKEN` (Auth Token ຂອງ Twilio):
-   //   - `z.string().min(1, 'Twilio Auth Token is required')`:
-   //     ຕ້ອງເປັນ string ທີ່ບໍ່ຫວ່າງເປົ່າ.
-   TWILIO_AUTH_TOKEN: z.string().min(1, 'Twilio Auth Token is required'),
-
-   // ກຳນົດໂຕແປ `TWILIO_PHONE_NUMBER` (ເບີໂທ Twilio):
-   //   - `z.string().min(1, 'Twilio Phone Number is required')`:
-   //     ຕ້ອງເປັນ string ທີ່ບໍ່ຫວ່າງເປົ່າ. (Comment ແນະນຳວ່າຄວນມີການກວດສອບທີ່ເຂັ້ມງວດກວ່ານີ້, ເຊັ່ນ ຮູບແບບເບີໂທ).
-   TWILIO_PHONE_NUMBER: z.string().min(1, 'Twilio Phone Number is required'), // Consider stricter validation
-
-   // ກຳນົດໂຕແປ `REDIS_HOST` (ທີ່ຢູ່ຂອງ Redis server):
-   //   - `z.string().default('localhost')`: ຕ້ອງເປັນ string, default ເປັນ 'localhost'.
-   REDIS_HOST: z.string().default('localhost'),
-
-   // ກຳນົດໂຕແປ `REDIS_PORT` (port ຂອງ Redis server):
-   //   - `z.coerce.number().positive().default(6379)`: ຄືກັນກັບ `PORT`, ແຕ່ default ເປັນ 6379 (port ມາດຕະຖານຂອງ Redis).
-   REDIS_PORT: z.coerce.number().positive().default(6379),
-
-   // ກຳນົດໂຕແປ `REDIS_PASSWORD` (ລະຫັດຜ່ານ Redis):
-   //   - `z.string().optional()`: ຕ້ອງເປັນ string, ແຕ່ບໍ່ຈຳເປັນຕ້ອງມີ (`optional`). ຖ້າບໍ່ມີ, ຄ່າຈະເປັນ `undefined`.
-   REDIS_PASSWORD: z.string().optional(),
-
-   // ກຳນົດໂຕແປ `CORS_ORIGIN` (URL ທີ່ອະນຸຍາດໃຫ້ເຂົ້າເຖິງ API ຜ່ານ CORS):
-   //   - `z.string().url('CORS_ORIGIN must be a valid URL')`: ຕ້ອງເປັນ string ທີ່ເປັນຮູບແບບ URL ທີ່ຖືກຕ້ອງ. ຖ້າບໍ່ແມ່ນ, ສະແດງຂໍ້ຄວາມ error.
-   //   - `.optional()`: ບໍ່ຈຳເປັນຕ້ອງມີ.
-   CORS_ORIGIN: z.string().url('CORS_ORIGIN must be a valid URL').optional(), // Validate URL if present
-
-   // ກຳນົດໂຕແປ `LOG_LEVEL` (ລະດັບການບັນທຶກ log):
-   //   - `z.enum(['trace', 'debug', 'info', 'warn', 'error', 'fatal'])`: ຕ້ອງເປັນໜຶ່ງໃນຄ່າ string ເຫຼົ່ານີ້.
-   //   - `.default('info')`: ຖ້າບໍ່ມີການກຳນົດ, ໃຊ້ຄ່າ 'info' ເປັນຄ່າເລີ່ມຕົ້ນ.
-   LOG_LEVEL: z.enum(['trace', 'debug', 'info', 'warn', 'error', 'fatal']).default('info'),
-}); // ສິ້ນສຸດການກຳນົດ schema.
-
-// ປະກາດໂຕແປ `config` ໂດຍຍັງບໍ່ກຳນົດຄ່າ.
-// `z.infer<typeof envSchema>` ເປັນການໃຊ້ Zod ເພື່ອສ້າງ TypeScript type ໂດຍອັດຕະໂນມັດ
-// ຈາກ `envSchema` ທີ່ເຮົາກຳນົດໄວ້. ນີ້ຊ່ວຍໃຫ້ມີ type safety ເມື່ອເອີ້ນໃຊ້ຄ່າຕ່າງໆໃນ `config`.
 let config: z.infer<typeof envSchema>;
+let tempLogger = console; // ใช้ console.log ชั่วคราวก่อน logger พร้อม
 
-// ເລີ່ມຕົ້ນ block `try` ເພື່ອດັກຈັບຂໍ້ຜິດພາດທີ່ອາດຈະເກີດຂຶ້ນໃນຂະນະທີ່ກວດສອບ environment variables.
 try {
-   // ໃຊ້ method `parse` ຂອງ `envSchema` ເພື່ອກວດສອບ object `process.env` (ເຊິ່ງບັນຈຸ environment variables ທັງໝົດ)
-   // ທຽບກັບ schema ທີ່ກຳນົດໄວ້.
-   //   - ຖ້າ `process.env` ຖືກຕ້ອງຕາມ `envSchema` (ລວມທັງການແປງ type ແລະ ໃຊ້ຄ່າ default),
-   //     `parse` ຈະສົ່ງຄືນ object ທີ່ມີ type ຖືກຕ້ອງ ແລະ ຄ່າທີ່ກວດສອບແລ້ວ, ເຊິ່ງຈະຖືກເກັບໄວ້ໃນໂຕແປ `config`.
-   //   - ຖ້າ `process.env` ບໍ່ຖືກຕ້ອງຕາມ `envSchema`, `parse` ຈະ throw error (ຊະນິດ `z.ZodError`).
+   config = envSchema.parse(process.env); // <-- จุดที่ Validate
+   logger.info('Environment configuration loaded and validated successfully.');
+} catch (error) {
+   if (error instanceof z.ZodError) {
+      logger.fatal({ errors: error.format() }, 'Environment variable validation failed!'); // <-- Log ที่คุณเห็น
+   } else {
+       logger.fatal({ error }, 'An unknown error occurred during environment variable parsing:');
+   }
+  process.exit(1); // ออกจากโปรแกรมถ้า Validation ไม่ผ่าน
+}
+
+try {
+  
    config = envSchema.parse(process.env);
-   // logger.info('Environment configuration loaded and validated.'); // Comment ນີ້ບອກວ່າ logger ອາດຈະຍັງບໍ່ພ້ອມເຕັມທີ່ໃນຈຸດນີ້ ຂຶ້ນກັບລຳດັບການໂຫຼດ.
-   // ໃຊ້ `console.log` ແທນ ເພື່ອໃຫ້ມີ feedback ທັນທີວ່າການໂຫຼດ ແລະ ກວດສອບ config ສຳເລັດ.
-   console.log('Environment configuration loaded and validated successfully.'); // Use console here for early feedback
-// ເລີ່ມຕົ້ນ block `catch` ເຊິ່ງຈະເຮັດວຽກຖ້າ `envSchema.parse(process.env)` ເກີດ error.
+ 
+   console.log('Environment configuration loaded and validated successfully.');
 } catch (error) {
    // ສະແດງຂໍ້ຄວາມ error ຮ້າຍແຮງອອກທາງ console.
    console.error('FATAL: Environment variable validation failed!');
@@ -128,10 +105,10 @@ try {
    if (error instanceof z.ZodError) {
       // ຖ້າແມ່ນ `ZodError`, ໃຫ້ໃຊ້ method `format()` ຂອງມັນ ເພື່ອສະແດງລາຍລະອຽດຂອງຂໍ້ຜິດພາດ
       // ໃນຮູບແບບທີ່ອ່ານງ່າຍ (ບອກວ່າ field ໃດຜິດພາດຍ້ອນຫຍັງ).
-      console.error(error.format());
+      logger.fatal({ errors: error.format() }, 'FATAL: Environment variable validation failed!');
    } else {
       // ຖ້າເປັນ error ປະເພດອື່ນ, ໃຫ້ສະແດງ object error ນັ້ນອອກທາງ console.
-      console.error(error);
+      logger.fatal({ error }, 'FATAL: An unknown error occurred during environment variable parsing:');
    }
    // ໃຊ້ `process.exit(1)` ເພື່ອສັ່ງໃຫ້ Node.js application ຢຸດການເຮັດວຽກທັນທີ
    // ເນື່ອງຈາກ environment variables ທີ່ຈຳເປັນບໍ່ຖືກຕ້ອງ, ແອັບບໍ່ຄວນເຮັດວຽກຕໍ່ໄປ.
@@ -155,12 +132,14 @@ export const dbConfig = {
    queueLimit: 0,                // ຕັ້ງຄ່າ pool: ຈຳນວນ request ສູງສຸດທີ່ລໍຖ້າ connection (0 = ບໍ່ຈຳກັດ)
 };
 
+
+
 // ສ້າງ ແລະ export object `twilioConfig` ສະເພາະສຳລັບການຕັ້ງຄ່າ Twilio.
-export const twilioConfig = {
+/* export const twilioConfig = {
    accountSid: config.TWILIO_ACCOUNT_SID, // Account SID
    authToken: config.TWILIO_AUTH_TOKEN,   // Auth Token
    phoneNumber: config.TWILIO_PHONE_NUMBER, // ເບີໂທ Twilio
-};
+}; */
 
 // ສ້າງ ແລະ export object `redisConfig` ສະເພາະສຳລັບການຕັ້ງຄ່າ Redis.
 export const redisConfig = {
