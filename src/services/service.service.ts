@@ -15,6 +15,8 @@ export interface ServiceWithFeatures extends RowDataPacket {
     icon_url: string | null;
     is_active: boolean; // หรือ TINYINT(1)
     features?: string[]; // Array of feature names (ถ้า JOIN มา)
+    created_at?: Date; // เพิ่มเข้ามา
+    updated_at?: Date;
 }
 
 /**
@@ -22,7 +24,7 @@ export interface ServiceWithFeatures extends RowDataPacket {
  */
 export const getAllServices = async (pool: Pool, queryParams?: GetAllServicesQuery): Promise<ServiceWithFeatures[]> => {
     logger.debug({ queryParams }, 'Fetching all services');
-    let sql = `SELECT service_id, name, description, category, base_price, cover_image_url, icon_url, is_active FROM Services`;
+    let sql = `SELECT service_id, name, description, category, base_price, cover_image_url, icon_url, is_active, created_at, updated_at FROM Services`;
     const params: any[] = [];
     const whereClauses: string[] = [];
 
@@ -68,7 +70,7 @@ export const getServiceById = async (pool: Pool, serviceId: number): Promise<Ser
         await connection.beginTransaction();
 
         const [serviceRows] = await connection.query<ServiceWithFeatures[]>(
-            'SELECT * FROM Services WHERE service_id = ? LIMIT 1',
+            'SELECT service_id, name, description, category, base_price, cover_image_url, icon_url, is_active, created_at, updated_at FROM Services WHERE service_id = ? LIMIT 1',
             [serviceId]
         );
         const service = serviceRows[0];
@@ -111,7 +113,7 @@ export const createService = async (pool: Pool, input: CreateServiceInput): Prom
         // 1. Insert vào Services table
         const [serviceResult] = await connection.query<ResultSetHeader>(
             'INSERT INTO Services (name, description, category, base_price, cover_image_url, icon_url, is_active) VALUES (?, ?, ?, ?, ?, ?, ?)',
-            [name, description, category, basePrice, coverImageUrl, iconUrl, isActive]
+            [name, description, category, basePrice, coverImageUrl, iconUrl, isActive ?? true]
         );
         const serviceId = serviceResult.insertId;
         if (!serviceId) {
@@ -175,7 +177,7 @@ export const updateServiceById = async (pool: Pool, serviceId: number, input: Up
             const setClauses = Object.keys(serviceFieldsToUpdate).map(field => `${field} = ?`).join(', ');
             serviceQueryParams.push(...Object.values(serviceFieldsToUpdate));
             serviceQueryParams.push(serviceId);
-            const updateSql = `UPDATE Services SET ${setClauses}, updated_at = NOW() WHERE service_id = ?`;
+            const updateSql = `UPDATE Services SET ${setClauses} WHERE service_id = ?`;
             const [updateResult] = await connection.query<ResultSetHeader>(updateSql, serviceQueryParams);
             if (updateResult.affectedRows === 0) {
                  await connection.rollback();

@@ -13,7 +13,6 @@ router.use(authenticate); // <-- ใช้ middleware กับทุก routes 
 
 // GET /api/users/me
 router.get('/me', getMyProfileHandler as RequestHandler); // <-- ใช้ authenticate middleware
-console.log('ERROR:' , UpdateProfileSchema.shape.body);
 router.put(
     '/me',
     validateRequest({ body: UpdateProfileSchema.shape.body }), updateMyProfileHandler
