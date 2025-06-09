@@ -104,7 +104,7 @@ export const getServiceById = async (pool: Pool, serviceId: number): Promise<Ser
 
 export const createService = async (pool: Pool, input: CreateServiceInput): Promise<ServiceWithFeatures> => {
     const { name, description, category, basePrice, coverImageUrl, iconUrl, isActive, features } = input;
-    logger.debug({ name }, 'Creating new service');
+    logger.debug({ name, coverImageUrl, iconUrl }, 'Creating new service');
 
     const connection = await pool.getConnection();
     try {

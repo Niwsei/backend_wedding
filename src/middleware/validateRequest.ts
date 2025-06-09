@@ -5,7 +5,7 @@ import { Request, Response, NextFunction } from 'express';
 
 // ນຳເຂົ້າ class `ZodError` (class ຂອງຂໍ້ຜິດພາດທີ່ Zod ໂຍນອອກມາເມື່ອ validation ລົ້ມເຫຼວ)
 // ແລະ type `ZodSchema` (type ທີ່ໃຊ້ສະແດງເຖິງ schema ທີ່ສ້າງຈາກ Zod) ຈາກ library 'zod'.
-import { ZodError, ZodSchema } from 'zod';
+import { ZodError, ZodSchema, AnyZodObject  } from 'zod';
 
 // ປະກາດ ແລະ export function ຊື່ `validateRequest`.
 // Function ນີ້ບໍ່ແມ່ນ middleware ໂດຍກົງ, ແຕ່ມັນເປັນ "ໂຕສ້າງ middleware" (middleware factory).
@@ -29,22 +29,9 @@ export const validateRequest = (
     // ເລີ່ມຕົ້ນ block `try` ເພື່ອລອງກວດສອບຂໍ້ມູນ request ຕາມ schema ທີ່ໃຫ້ມາ
     // ແລະ ດັກຈັບຂໍ້ຜິດພາດທີ່ອາດຈະເກີດຂຶ້ນ (ໂດຍສະເພາະ `ZodError`).
     try {
-      // ກວດສອບວ່າ `schemas.body` ມີການກຳນົດມາຫຼືບໍ່.
-      // ຖ້າມີ, ໃຫ້ເອີ້ນ method `parse()` ຂອງ schema ນັ້ນ ໂດຍສົ່ງ `req.body` (ຂໍ້ມູນທີ່ client ສົ່ງມາໃນ body) ເຂົ້າໄປ.
-      // `parse()` ຈະກວດສອບ ແລະ ຖ້າຂໍ້ມູນບໍ່ຖືກຕ້ອງຕາມ schema, ມັນຈະ throw `ZodError`.
-      if (schemas.body) schemas.body.parse(req.body);
-
-      // ກວດສອບວ່າ `schemas.query` ມີການກຳນົດມາຫຼືບໍ່.
-      // ຖ້າມີ, ໃຫ້ເອີ້ນ `parse()` ໂດຍສົ່ງ `req.query` (ຂໍ້ມູນ query parameters ຈາກ URL) ເຂົ້າໄປ.
-      if (schemas.query) schemas.query.parse(req.query);
-
-      // ກວດສອບວ່າ `schemas.params` ມີການກຳນົດມາຫຼືບໍ່.
-      // ຖ້າມີ, ໃຫ້ເອີ້ນ `parse()` ໂດຍສົ່ງ `req.params` (ຂໍ້ມູນ route parameters ຈາກ URL, ເຊັ່ນ /users/:id) ເຂົ້າໄປ.
-      if (schemas.params) schemas.params.parse(req.params);
-
-      // ຖ້າການ `parse()` ທັງໝົດ (ສຳລັບ schema ທີ່ມີຢູ່) ຜ່ານໄປໄດ້ໂດຍບໍ່ມີ error,
-      // ໃຫ້ເອີ້ນ `next()` ເພື່ອສົ່ງຕໍ່ control ໄປຍັງ middleware ຫຼື route handler ໂຕຕໍ່ໄປ.
-      // ນີ້ໝາຍຄວາມວ່າ request data ຖືກຕ້ອງຕາມ schema ແລ້ວ.
+        if (schemas.body) req.body = schemas.body.parse(req.body); // Assign parsed value back
+      if (schemas.query) req.query = schemas.query.parse(req.query); // ***** GANTI INI *****
+      if (schemas.params) req.params = schemas.params.parse(req.params); // Assign parsed value back
       next();
     // ເລີ່ມຕົ້ນ block `catch` ເຊິ່ງຈະເຮັດວຽກຖ້າມີ error ເກີດຂຶ້ນໃນ block `try` (ເຊັ່ນ `parse()` ລົ້ມເຫຼວ).
     } catch (error) {

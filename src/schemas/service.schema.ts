@@ -29,8 +29,8 @@ export const CreateServiceSchema = z.object({
         description: z.string().optional().nullable(),
         category: z.string().optional().nullable(),
         basePrice: z.number().min(0, 'Base price cannot be negative').optional().nullable(),
-        coverImageUrl: z.string().url('Invalid cover image URL').optional().nullable(),
-        iconUrl: z.string().url('Invalid icon URL').optional().nullable(),
+        coverImageUrl: z.string().startsWith('/', "Cover image path must start with '/'").optional().nullable(),
+        iconUrl: z.string().startsWith('/', "Icon path must start with '/'").optional().nullable(),
         isActive: z.boolean().optional().default(true),
         features: z.array(z.string().min(1).trim()).optional(), // Array of feature names
     }),

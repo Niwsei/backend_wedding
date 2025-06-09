@@ -13,7 +13,7 @@ export type GetAllTestimonialsQuery = z.infer<typeof GetAllTestimonialsQuerySche
 export const CreateTestimonialSchema = z.object({
     body: z.object({
         coupleName: z.string().min(1, 'Couple name is required').trim(),
-        photoUrl: z.string().url('Invalid photo URL format').optional().nullable(),
+        photoUrl: z.string().startsWith('/', "Image path must start with '/'").optional().nullable(),
         rating: z.number().int().min(1).max(5, 'Rating must be between 1 and 5'),
         quote: z.string().min(10, 'Quote must be at least 10 characters').trim(),
         weddingDate: z.string().datetime({ offset: true, message: "Invalid wedding date format." }).optional().nullable(),

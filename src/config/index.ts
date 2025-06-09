@@ -130,6 +130,7 @@ export const dbConfig = {
    waitForConnections: true,     // ຕັ້ງຄ່າ pool: ລໍຖ້າ connection ຖ້າບໍ່ມີໂຕວ່າງ
    connectionLimit: 10,          // ຕັ້ງຄ່າ pool: ຈຳນວນ connection ສູງສຸດໃນ pool
    queueLimit: 0,                // ຕັ້ງຄ່າ pool: ຈຳນວນ request ສູງສຸດທີ່ລໍຖ້າ connection (0 = ບໍ່ຈຳກັດ)
+   decimalNumbers: true,
 };
 
 

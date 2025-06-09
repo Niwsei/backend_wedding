@@ -71,24 +71,11 @@ let pool: Pool;
 // ເລີ່ມຕົ້ນ block `try` ເພື່ອດັກຈັບ (catch) ຂໍ້ຜິດພາດທີ່ອາດຈະເກີດຂຶ້ນ
 // ໃນລະຫວ່າງການສ້າງ object ການຕັ້ງຄ່າ ຫຼື ການສ້າງ connection pool.
 try {
-    // ສ້າງ object `options` ເພື່ອກຳນົດຄ່າຕ່າງໆໃຫ້ກັບ connection pool.
-    // ລະບຸ type ຂອງ `options` ໃຫ້ເປັນ `PoolOptions`.
     const options: PoolOptions = {
-        // ໃຊ້ Spread syntax (`...`) ເພື່ອ copy ຄຸນສົມບັດທັງໝົດຈາກ object `dbConfig`
-        // (ເຊັ່ນ: host, user, password, database) ເຂົ້າມາໃນ object `options` ນີ້.
         ...dbConfig,
-        // Optional: ເພີ່ມການຕັ້ງຄ່າ timezone ຫຼື charset ຖ້າຕ້ອງການ.
-        // ສ່ວນນີ້ຖືກ comment ໄວ້, ໝາຍຄວາມວ່າຍັງບໍ່ໄດ້ໃຊ້ງານຕອນນີ້.
-        // timezone: '+00:00', // ກຳນົດ timezone ຂອງການເຊື່ອມຕໍ່
-        // charset: 'utf8mb4' // ກຳນົດ character set
     };
-    // ໃຊ້ function `createPool` ຈາກ `mysql` (ທີ່ເຮົານຳເຂົ້າມາ) ເພື່ອສ້າງ connection pool ຕົວຈິງ.
-    // ສົ່ງ object `options` (ທີ່ບັນຈຸການຕັ້ງຄ່າ) ເຂົ້າໄປ.
-    // ຜົນລັບ (ກໍຄື object ຂອງ pool) ຈະຖືກເກັບໄວ້ໃນໂຕແປ `pool` ທີ່ປະກາດໄວ້ກ່ອນໜ້ານີ້.
     pool = mysql.createPool(options);
 
-    // ທົດສອບການເຊື່ອມຕໍ່ແບບ asynchronous (ບໍ່ລໍຖ້າ block code ອື່ນ) ທັນທີຫຼັງຈາກສ້າງ pool.
-    // ເອີ້ນ `pool.getConnection()` ເຊິ່ງຈະສົ່ງຄືນ Promise ທີ່ເມື່ອສຳເລັດຈະໄດ້ object ການເຊື່ອມຕໍ່ (connection).
     pool.getConnection()
         // ໃຊ້ `.then()` ເພື່ອຈັດການກໍລະນີທີ່ຂໍ connection ສຳເລັດ.
         // `connection` ແມ່ນ object ຂອງການເຊື່ອມຕໍ່ທີ່ໄດ້ມາຈາກ pool.

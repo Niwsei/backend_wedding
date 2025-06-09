@@ -30,7 +30,7 @@ export const CreatePackageSchema = z.object({
         name: z.string().min(1, 'Package name is required').trim(),
         description: z.string().optional().nullable(),
         price: z.number().min(0, 'Price cannot be negative'),
-        coverImageUrl: z.string().url('Invalid cover image URL').optional().nullable(),
+        coverImageUrl: z.string().startsWith('/', "Cover image path must start with '/'").optional().nullable(),
         isPopular: z.boolean().optional().default(false),
         isActive: z.boolean().optional().default(true),
         // Array ของ Service IDs หรือ Object ที่มี Service ID เพื่อรวมใน Package

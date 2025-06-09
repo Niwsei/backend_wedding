@@ -13,7 +13,7 @@ export type GetAllBannersQuery = z.infer<typeof GetAllBannersQuerySchema>['query
 // --- Schemas สำหรับ Create/Update (Admin) ---
 export const CreateBannerSchema = z.object({
     body: z.object({
-        imageUrl: z.string().url('Image URL is required and must be a valid URL'),
+        imageUrl: z.string().startsWith('/', "Image path must start with '/'"),
         title: z.string().optional().nullable(),
         subtitle: z.string().optional().nullable(),
         buttonText: z.string().optional().nullable(),

@@ -7,6 +7,7 @@ import apiRouter from './routes';
 import { errorHandler } from './middleware/errorHandler';
 import logger, { addRequestId, requestLogger } from './utils/logger';
 import { setupSwagger } from './config/swagger';
+import path from 'path';
 
 const app: express.Express = express();
 
@@ -20,6 +21,9 @@ app.use(cors({ origin: config.CORS_ORIGIN, credentials: true }));
 app.use(compression());
 app.use(express.json({ limit: '10kb' }));
 app.use(express.urlencoded({ extended: true, limit: '10kb' }));
+
+
+app.use('/uploads', express.static(path.join(__dirname, '../../uploads')));
 
 if (config.NODE_ENV !== 'production') { // แสดง Docs เฉพาะใน Non-Production
     setupSwagger(app);

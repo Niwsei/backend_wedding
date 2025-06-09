@@ -28,20 +28,24 @@ export const getAllBanners = async (pool: Pool, queryParams?: GetAllBannersQuery
 
     // By default, only fetch active banners unless 'isActive=false' is specified
     if (queryParams?.isActive === undefined) {
+         logger.debug('No isActive query param, defaulting to active banners.');
         whereClauses.push('is_active = ?');
-        params.push(true);
+        params.push(true); // ใน MySQL, boolean true มักจะถูก map เป็น 1
     } else if (queryParams?.isActive !== undefined) {
+        logger.debug(`isActive query param received: ${queryParams.isActive}, type: ${typeof queryParams.isActive}`);
         whereClauses.push('is_active = ?');
-        params.push(queryParams.isActive);
+        params.push(queryParams.isActive); // ค่านี้ควรจะเป็น boolean `true`
     }
 
     if (whereClauses.length > 0) {
         sql += ` WHERE ${whereClauses.join(' AND ')}`;
     }
     sql += ` ORDER BY sort_order ASC, banner_id ASC`; // เรียงตาม sort_order ก่อน แล้วตาม ID
+    logger.debug({ generatedSql: sql, queryParamsSentToDb: params }, 'Final SQL for getAllBanners');
 
     try {
         const [rows] = await pool.query<Banner[]>(sql, params);
+         logger.debug({ bannerCountFromDb: rows.length, firstBanner: rows[0] }, 'Banners fetched from DB'); 
         return rows;
     } catch (error: any) {
         logger.error({ err: error, queryParams }, 'Error fetching all banners');

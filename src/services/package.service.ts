@@ -49,7 +49,13 @@ export const getAllPackages = async (pool: Pool, queryParams?: GetAllPackagesQue
         const [rows] = await pool.query<PackageBase[]>(sql, params);
         // ถ้าต้องการดึง Services ที่รวมในแต่ละ Package ด้วย อาจจะต้อง Loop แล้ว Query เพิ่ม หรือใช้ JOIN ที่ซับซ้อน
         // สำหรับ List View อาจจะยังไม่จำเป็นต้องดึง Services ทั้งหมด
-        return rows;
+        // แปลงราคาเป็น Integer ถ้าจำเป็น
+        const updatedRows = rows.map(row => ({
+            ...row,
+            price: parseInt(row.price as any, 10),
+        }));
+        
+        return updatedRows;
     } catch (error: any) {
         logger.error({ err: error, queryParams }, 'Error fetching all packages');
         throw new ApiError(500, 'Could not retrieve packages due to a server error', false);

@@ -15,7 +15,7 @@ export const CreateOfferSchema = z.object({
     body: z.object({
         title: z.string().min(1, 'Offer title is required').trim(),
         description: z.string().optional().nullable(),
-        iconUrl: z.string().url('Invalid icon URL format').optional().nullable(),
+        iconUrl: z.string().startsWith('/', "Icon path must start with '/'").optional().nullable(),
         discountDetails: z.string().optional().nullable(), // เช่น "20% off", "Free consultation"
         validFrom: z.string().datetime({ offset: true, message: "Invalid valid_from date format." }).optional().nullable(),
         validUntil: z.string().datetime({ offset: true, message: "Invalid valid_until date format." }).optional().nullable(),

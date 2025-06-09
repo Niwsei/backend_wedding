@@ -18,6 +18,8 @@ import testimonialRouter from './testimonial.routes';
 import eventRouter from './event.routes';
 // import other routers...
 
+import uploadRouter from './upload.routes'; 
+
 const router = express.Router();
 
 router.use(generalRateLimiter); // Apply rate limiting middleware globally
@@ -44,6 +46,7 @@ router.use('/banners', bannerRouter);
 router.use('/offers', offerRouter); 
 router.use('/testimonials', testimonialRouter);
 router.use('/events', eventRouter);
+router.use('/uploads', uploadRouter);
 
 
 export default router;
